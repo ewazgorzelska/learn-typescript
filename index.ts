@@ -24,6 +24,28 @@ const candidate = {
     hobbies: ['sport', 'netflix', 'books']
 }
 
+interface Validator {
+    isValid(candidate: Candidate): boolean
+}
+
+class EmailValidator implements Validator {
+    constructor(protected readonly minlength: number) {}
+    isValid({email}: Candidate): boolean {
+        return email != null && email.length > this.minlength;
+    }
+}
+
+class ProficiencyValidator implements Validator {
+    constructor(protected readonly candidate: Partial<Candidate>) {}
+    
+    isValid({proficiency}: Candidate): boolean {
+        if (this.candidate.age < 25) {
+            return false;
+        }
+        return proficiency !== Proficiency.Junior && proficiency !== Proficiency.Regular;
+    }
+}
+
 function getName(candidate: Candidate): string {
     return `${candidate.firstName} ${candidate.lastName}`;
 };
@@ -32,14 +54,13 @@ function processCandidate(candidate: Candidate) {
     const fullName = getName(candidate);
     console.log('hello, ' + fullName + '!');
 
-    if (candidate.email == null) {
-        console.log('We cannot process your resume because email is missing');
+    const validators = [new EmailValidator(5), new ProficiencyValidator(candidate)];
+    const isValid = validators.every(validator => validator.isValid(candidate));
+
+    if(!isValid) {
         return;
     }
-    if (candidate.proficiency === Proficiency.Junior || candidate.proficiency === Proficiency.Regular) {
-        console.log('Unfortunately right now we\'re looking for ' + candidate.mainLanguage + ' experts :(');
-        return;
-    }
+
     if (candidate.age.length < 2) {
         console.log('You are too young');
     }
